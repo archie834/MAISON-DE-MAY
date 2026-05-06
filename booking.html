@@ -111,29 +111,32 @@
 
       <!-- Form -->
       <form id="booking-form" style="display:flex;flex-direction:column;gap:1.25rem" novalidate>
+        <input type="hidden" name="access_key" value="849afa75-6ff5-44d5-b5b3-ead4a6d38b1f">
+        <input type="hidden" name="subject" value="New Booking Request — Maison De May Beauty">
+        <input type="hidden" name="from_name" value="Maison De May Website">
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem" class="name-grid">
-          <div class="field"><label>First Name</label><input type="text" name="fn" placeholder="Jane" required></div>
-          <div class="field"><label>Last Name</label><input type="text" name="ln" placeholder="Smith" required></div>
+          <div class="field"><label>First Name</label><input type="text" name="first_name" placeholder="Jane" required></div>
+          <div class="field"><label>Last Name</label><input type="text" name="last_name" placeholder="Smith" required></div>
         </div>
 
-        <div class="field"><label>Email Address <span style="opacity:.4;font-size:.58rem;letter-spacing:.1em">(recommended)</span></label><input type="email" name="em" placeholder="jane@example.com"></div>
-        <div class="field"><label>Phone Number</label><input type="tel" name="ph" placeholder="+44 7700 000 000"></div>
+        <div class="field"><label>Email Address <span style="opacity:.4;font-size:.58rem;letter-spacing:.1em">(recommended)</span></label><input type="email" name="email" placeholder="jane@example.com"></div>
+        <div class="field"><label>Phone Number</label><input type="tel" name="phone" placeholder="+44 7700 000 000"></div>
 
         <div class="field">
           <label>Treatment</label>
-          <select name="tr" style="background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%23B8902E' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 14px center;background-color:#FDF9F2;border:1px solid #E4CDB0;padding:.9rem 1rem;font-family:'Jost',sans-serif;font-weight:300;font-size:.9rem;color:#1E1008;appearance:none;">
+          <select name="treatment" style="background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%23B8902E' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 14px center;background-color:#FDF9F2;border:1px solid #E4CDB0;padding:.9rem 1rem;font-family:'Jost',sans-serif;font-weight:300;font-size:.9rem;color:#1E1008;appearance:none;">
             <option value="" disabled selected>Select a treatment</option>
             <option>Microblading — Initial Session</option>
             <option>Top Up (5–8 weeks)</option>
           </select>
         </div>
 
-        <div class="field"><label>Preferred Date</label><input type="date" name="dt"></div>
+        <div class="field"><label>Preferred Date</label><input type="date" name="preferred_date"></div>
 
         <div class="field">
           <label>Message <span style="opacity:.4;font-size:.58rem">(optional)</span></label>
-          <textarea name="ms" rows="4" placeholder="Any questions or things you'd like me to know..." style="resize:vertical;min-height:100px;background:#FDF9F2;border:1px solid #E4CDB0;padding:.9rem 1rem;font-family:'Jost',sans-serif;font-weight:300;font-size:.9rem;color:#1E1008;transition:border-color .2s,box-shadow .2s"></textarea>
+          <textarea name="message" rows="4" placeholder="Any questions or things you'd like me to know..." style="resize:vertical;min-height:100px;background:#FDF9F2;border:1px solid #E4CDB0;padding:.9rem 1rem;font-family:'Jost',sans-serif;font-weight:300;font-size:.9rem;color:#1E1008;transition:border-color .2s,box-shadow .2s"></textarea>
         </div>
 
         <button type="submit" class="submit-btn">Book Appointment</button>
@@ -177,21 +180,33 @@
 
 <script>
   document.getElementById('ham').addEventListener('click',()=>{const m=document.getElementById('mob');m.style.display=m.style.display==='block'?'none':'block'});
-  document.getElementById('booking-form').addEventListener('submit',e=>{
+  document.getElementById('booking-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const d=new FormData(e.target);
-    const msg=encodeURIComponent(
-      `*New Booking Enquiry — Maison De May Beauty*\n\n` +
-      `*Name:* ${d.get('fn')} ${d.get('ln')}\n` +
-      `*Email:* ${d.get('em')||'—'}\n` +
-      `*Phone:* ${d.get('ph')||'—'}\n` +
-      `*Treatment:* ${d.get('tr')||'—'}\n` +
-      `*Preferred Date:* ${d.get('dt')||'—'}\n` +
-      `*Message:* ${d.get('ms')||'—'}`
-    );
-    window.open(`https://wa.me/447359821568?text=${msg}`, '_blank');
-    e.target.style.display='none';
-    document.getElementById('success').style.display='block';
+    const btn = this.querySelector('.submit-btn');
+    const original = btn.textContent;
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        body: new FormData(this)
+      });
+      if (res.ok) {
+        this.style.display = 'none';
+        document.getElementById('success').style.display = 'block';
+      } else {
+        btn.textContent = 'Failed — Try Again';
+        btn.style.background = '#dc2626';
+        btn.disabled = false;
+        setTimeout(() => { btn.textContent = original; btn.style.background = ''; }, 4000);
+      }
+    } catch {
+      btn.textContent = 'Failed — Try Again';
+      btn.style.background = '#dc2626';
+      btn.disabled = false;
+      setTimeout(() => { btn.textContent = original; btn.style.background = ''; }, 4000);
+    }
   });
 </script>
 </body>
